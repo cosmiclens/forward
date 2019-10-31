@@ -1,18 +1,20 @@
 import numpy as np
 
-def integrate_sed(z, λe, fe, λx, Rx, extinction=None):
+def integrate_sed(z, le, fe, lx, Rx, extinction=None):
   if extinction is not None:
     raise NotImplementedError('cannot handle extinction')
 
   if len(np.shape(z)) > 1:
     raise ValueError('redshift z must be 1d array or scalar')
 
-  if len(np.shape(λx)) != 1 or len(np.shape(Rx)) != 1:
-      raise ValueError('filter λx, Rx must be 1d arrays')
+  if len(np.shape(lx)) != 1 or len(np.shape(Rx)) != 1:
+      raise ValueError('filter lx, Rx must be 1d arrays')
 
-  λo = np.expand_dims(λe, -1)*np.add(z, 1)
+  lo = np.expand_dims(le, -1)*np.add(z, 1)
   fo = np.expand_dims(fe, -1)
-  Ro = np.apply_along_axis(lambda λ: np.interp(λ, λx, Rx), -1, λo)
+  Ro = np.apply_along_axis(lambda l: np.interp(l, lx, Rx), -1, lo)
 
-  return np.trapz(λo*fo*Ro, λo, axis=-2)
+  result = np.trapz(lo*fo*Ro, lo, axis=-2)
+
+  return result
 
