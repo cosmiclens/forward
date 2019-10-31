@@ -11,7 +11,7 @@ def integrate_sed(z, le, fe, lx, Rx, extinction=None):
   Rx (array-like): filter response values R_x(λ_x)
 
   Returns:
-  integral of (redshifted SED)*(filter pass) over observed wavelength
+  array of shape (#redshifts, #SEDs, #bands)
   '''
 
   if extinction is not None:
@@ -20,14 +20,16 @@ def integrate_sed(z, le, fe, lx, Rx, extinction=None):
   if np.ndim(z) > 1:
     raise ValueError('redshift z must be 1d array or scalar')
 
-  if np.ndim(lx) != 1 or np.ndim(Rx) != 1:
-      raise ValueError('filter lx, Rx must be 1d arrays')
+  # make sure Rx is a 2d array
+  # then use broadcasting to make lx same shape
+  Rx = np.atleast_2d(Rx)
+  lx = np.ones(Rx.shape)*np.atleast_2d(lx)
 
   lo = np.expand_dims(le, -1)*np.add(z, 1)
   fo = np.expand_dims(fe, -1)
-  Ro = np.interp(lo, lx, Rx, left=0., right=0.)
+  Ro = [[np.interp(lo, lx1, Rx1, left=0, right=0)] for lx1, Rx1 in zip(lx, Rx)]
 
-  result = np.trapz(lo*fo*Ro, lo, axis=-2)
+  result = np.trapz(lo*fo*Ro, lo, axis=-2).transpose()
 
   return result
 
