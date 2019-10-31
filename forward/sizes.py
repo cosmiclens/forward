@@ -13,3 +13,11 @@ def rphys50(M, amu = 1, bmu = 0, sigma = 1, size = 100):
     r = np.random.lognormal(muphys, sigma, size)
     return r
 
+# The next function transforms the half-light physical radius into the angular radius eq [3.15]
+# Arguments: physical radius r, redshift z, cosmology c as given by astropy.cosmology
+# The angular diameter distance dA is computed by using from e.g. astropy.cosmology import WMAP9 as cosmo
+
+def rang50(r = 1, z = 0, c):
+    dA = c.angular_diameter_distance(z)
+    ang = r * dA
+    return ang
