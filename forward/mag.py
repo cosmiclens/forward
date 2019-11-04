@@ -2,24 +2,32 @@ import numpy as np
 import itertools as it
 
 
-def abflux(z, le, fe, lx, Rx, extinction=None):
-  '''AB flux for a single SED and filter at multiple redshifts.
+def integrate_flux(z, le, fe, lx, Rx, extinction=None):
+  '''Integrate flux for a single SED and filter at multiple redshifts.'''
 
-  Does not include the cosmological scaling with luminosity distance.
-  '''
+  if extinction is not None:
+    raise NotImplementedError('cannot handle extinction')
 
   le = np.expand_dims(le, -1)
   fe = np.expand_dims(fe, -1)
   lo = le*(1 + np.atleast_1d(z))
   Ro = np.interp(lo, lx, Rx, left=0, right=0)
 
-  result = np.trapz(lo*fe*Ro, le, axis=-2)/np.trapz(Ro/lo, lo, axis=-2)
+  result = np.trapz(lo*fe*Ro, le, axis=-2)
 
   return result
 
 
-def abmag(z, le, fe, lx, Rx, extinction=None):
-  '''Compute magnitude at source redshifts from SEDs and filters.
+def abzeropt(lx, Rx):
+  '''Get the AB zeropoint magnitudes for given filters.'''
+
+  mag_zero = -2.5*np.log10(np.trapz(Rx/lx, lx, axis=-1))
+
+  return mag_zero
+
+
+def flux(z, le, fe, lx, Rx, extinction=None):
+  '''Compute flux at source redshifts from SEDs and filters.
 
   Does not include the cosmological scaling with (10pc/d_L)^2.
 
@@ -31,11 +39,8 @@ def abmag(z, le, fe, lx, Rx, extinction=None):
   Rx (array or list of arrays): filter response values R_x(λ_x) in counts/photon
 
   Returns:
-  array of shape (#redshifts, #SEDs, #bands) with singular dimensions squeezed
+  array of shape (#redshifts, #SEDs, #bands)
   '''
-
-  if extinction is not None:
-    raise NotImplementedError('cannot handle extinction')
 
   # check input dimensions
   if np.ndim(z) > 1:
@@ -64,7 +69,7 @@ def abmag(z, le, fe, lx, Rx, extinction=None):
   # compute AB fluxes for all bands and SEDs
   fluxes = [
     [
-      abflux(z, le1, fe1, lx1, Rx1, extinction)
+      integrate_flux(z, le1, fe1, lx1, Rx1, extinction)
       for le1, fe1 in zip(le, fe)
     ]
     for lx1, Rx1 in zip(lx, Rx)
@@ -73,8 +78,13 @@ def abmag(z, le, fe, lx, Rx, extinction=None):
   # transpose to get shape (len(z), len(fe), len(Rx)) for easier processing
   fluxes = np.transpose(fluxes)
 
-  # convert fluxes to magnitudes
-  mag = -2.5*np.log10(fluxes)
+  return fluxes
 
-  return mag
+def distmod(z, cosmology):
+  '''Compute the distance modulus at given redshifts.
+
+  The distance of 10pc corresponds to a distance modulus of zero.
+  '''
+
+  return 5*np.log10(cosmology.luminosity_distance(z).value*100 + 1)
 
