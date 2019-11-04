@@ -80,3 +80,11 @@ def flux(z, le, fe, lx, Rx, extinction=None):
 
   return fluxes
 
+def distmod(z, cosmology):
+  '''Compute the distance modulus at given redshifts.
+
+  The distance of 10pc corresponds to a distance modulus of zero.
+  '''
+
+  return 5*np.log10(cosmology.luminosity_distance(z).value*100 + 1)
+
