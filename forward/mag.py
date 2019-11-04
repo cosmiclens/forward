@@ -18,8 +18,10 @@ def abflux(z, le, fe, lx, Rx, extinction=None):
   return result
 
 
-def abmag(z, le, fe, lx, Rx, cosmology, extinction=None):
-  '''Compute apparent magnitude at source redshifts from SEDs and filters.
+def abmag(z, le, fe, lx, Rx, extinction=None):
+  '''Compute magnitude at source redshifts from SEDs and filters.
+
+  Does not include the cosmological scaling with (10pc/d_L)^2.
 
   Arguments:
   z (number or array): redshift values for observed SED
@@ -58,9 +60,6 @@ def abmag(z, le, fe, lx, Rx, cosmology, extinction=None):
     lx = it.repeat(lx)
   if np.ndim(Rx[0]) == 0:
     Rx = np.expand_dims(Rx, 0)
-
-  # compute the scaling with redshift
-  scale = 1/(cosmology.luminosity_distance(z).value*100+1)**2
 
   # compute AB fluxes for all bands and SEDs
   fluxes = [
