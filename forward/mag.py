@@ -13,7 +13,7 @@ def abflux(z, le, fe, lx, Rx, extinction=None):
   lo = le*(1 + np.atleast_1d(z))
   Ro = np.interp(lo, lx, Rx, left=0, right=0)
 
-  result = np.trapz(lo*fe*Ro, le, axis=-2)/np.trapz(lo*Ro, lo, axis=-2)
+  result = np.trapz(lo*fe*Ro, le, axis=-2)/np.trapz(Ro/lo, lo, axis=-2)
 
   return result
 
